@@ -5,6 +5,7 @@ global using Microsoft.AspNetCore.Mvc;
 global using System.ComponentModel.DataAnnotations;
 global using System.ComponentModel.DataAnnotations.Schema;
 global using System.Security.Claims;
+
 // context
 global using PhotoGallery_BackeEnd.Context;
 // controller
@@ -32,14 +33,16 @@ global using System.Text.Json.Serialization;
 global using AutoMapper;
 global using Microsoft.EntityFrameworkCore;
 global using Microsoft.IdentityModel.Tokens;
+global using Microsoft.AspNetCore.Authorization;
 global using System.IdentityModel.Tokens.Jwt;
 global using Microsoft.AspNetCore.Http.Features;
 global using Microsoft.AspNetCore.Server.Kestrel.Core;
 global using Microsoft.OpenApi.Models;
 global using Swashbuckle.AspNetCore.Filters;
 global using Microsoft.AspNetCore.Authentication.JwtBearer;
-
-
+global using Microsoft.AspNetCore.ResponseCompression;
+global using System.Security.Cryptography;
+using System.Text;
 
 // Minimal API section
 var builder = WebApplication.CreateBuilder(args);
@@ -47,12 +50,13 @@ builder.Configuration.AddJsonFile("appsettings.json");
 
 // --Add DbContext--
 
-//Code First
-builder.Services.AddDbContext<TaskDbContext>(options =>
+// Code First
+builder.Services.AddDbContext<APIDbContext>(options =>
 {
     var connectionString = builder.Configuration.GetConnectionString("BackEndDbConnection");
     options.UseSqlServer(connectionString);
 });
+
 // Add services to the container.
 builder.Services.AddCors(options => options.AddPolicy("CorsPolicy",
         builder =>
@@ -62,12 +66,26 @@ builder.Services.AddCors(options => options.AddPolicy("CorsPolicy",
                    .SetIsOriginAllowed((host) => true)
                    .AllowCredentials();
         }));
-//File limit
+
+// File limit
 // Configure the appsettings.json file
 var appSettings = builder.Configuration.GetSection("AppSettings");
+
+// Generate a secure key
+var key = new byte[64]; // 512 bits
+using (var rng = RandomNumberGenerator.Create())
+{
+    rng.GetBytes(key);
+}
+
+// Store the key securely. You can use a secret manager or store it as an environment variable.
+// For demonstration purposes, I'll store it in the appsettings.json.
+appSettings["Token"] = Convert.ToBase64String(key);
+
 var maxRequestLength = appSettings.GetValue<long>("MaxRequestLength");
 var maxAllowedContentLength = appSettings.GetValue<long>("MaxAllowedContentLength");
 var requestTimeoutSeconds = appSettings.GetValue<int>("RequestTimeout:Seconds");
+
 builder.Services.Configure<IISServerOptions>(options =>
 {
     options.MaxRequestBodySize = maxRequestLength;
@@ -82,10 +100,13 @@ builder.Services.Configure<FormOptions>(options =>
 {
     options.MultipartBodyLengthLimit = maxAllowedContentLength;
 });
+
 // Configure AutoMapper mappings
 builder.Services.AddAutoMapper(typeof(Program).Assembly);
+
+builder.Services.AddHttpContextAccessor();
 // Add Service
-//builder.Services.AddScoped<IGetDataService, GetDataService>();
+// builder.Services.AddScoped<IGetDataService, GetDataService>();
 builder.Services.AddScoped<IAuthRepository, AuthRepository>();
 /*builder.Services.AddScoped<ICreateTaskService, CreateTaskService>();
 builder.Services.AddScoped<IExcuteTaskService, ExcuteTaskService>();
@@ -112,38 +133,46 @@ builder.Services.AddSwaggerGen(c =>
     });
     c.OperationFilter<SecurityRequirementsOperationFilter>();
 });
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(option =>
+
+builder.Services.AddResponseCompression(options =>
+options.MimeTypes = ResponseCompressionDefaults
+.MimeTypes
+.Concat(new[] { "application/octet-stream" }));
+
+// Configure JWT authentication with the generated key
+builder.Services.AddAuthentication().AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
     {
-        option.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(System.Text.Encoding.UTF8
-            .GetBytes(builder.Configuration.GetSection("AppSettings:Token").Value!)),
-            ValidateIssuer = false,
-            ValidateAudience = false
-        };
-    });
-builder.Services.AddHttpContextAccessor();
+        ValidateIssuerSigningKey = true,
+        ValidateAudience = false,
+        ValidateIssuer = false,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(
+                builder.Configuration.GetSection("AppSettings:Token").Value!))
+    };
+});
+
 
 // Add services to the container.
-
 builder.Services.AddControllers();
+
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
 // Configure logging
 builder.Services.AddLogging(logging =>
 {
     logging.AddConsole(); // Configure to log to the console
-}); 
+});
+
 var app = builder.Build();
 
-//Initial something
+// Initial something
 // Create a service scope
 using (var scope = app.Services.CreateScope())
 {
-    var dbContext = scope.ServiceProvider.GetRequiredService<TaskDbContext>();
+    var dbContext = scope.ServiceProvider.GetRequiredService<APIDbContext>();
     await dbContext.UpdateStatusForStartingProgramAsync();
 }
 
@@ -155,14 +184,11 @@ if (isDevelopment)
     app.UseSwaggerUI();
 }
 
-
 app.UseHttpsRedirection();
-
+app.UseRouting();
+app.UseAuthentication();
 app.UseAuthorization();
-
 app.MapControllers();
-
 app.UseCors("CorsPolicy");
 /*app.MapHub<ProgressHub>("/progresshub");*/
-
 app.Run();

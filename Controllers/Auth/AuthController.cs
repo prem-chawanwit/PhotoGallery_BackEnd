@@ -1,7 +1,7 @@
 ﻿namespace PhotoGallery_BackEnd.Controllers.Auth
 {
     [ApiController]
-    [Route("[controller]")]
+    [Route("api/[controller]")]
     public class AuthController : ControllerBase
     {
         private IAuthRepository _authRepo;
