@@ -1,8 +1,4 @@
-﻿
-
-using ChatHub.Models.Users;
-
-namespace PhotoGallery_BackEnd.Services.Auth
+﻿namespace PhotoGallery_BackEnd.Services.Auth
 {
     public interface IAuthRepository
     {

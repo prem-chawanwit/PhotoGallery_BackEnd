@@ -22,7 +22,7 @@
             if (process != "NORMAL" && process != "STOP")
             {
                 response.Data = $"Your task Command {process} is not in the correct format.";
-                response.success = false;
+                response.Success = false;
                 response.message = "Server requires command 'NORMAL' or 'STOP'.";
                 return BadRequest(response);
             }
@@ -46,7 +46,7 @@
                 else
                 {
                     response.Data = $"There are no matching task IDs for '{taskid}' in the server that are running.";
-                    response.success = false;
+                    response.Success = false;
                     response.message = "Please check your taskId for correctness.";
                     return BadRequest(response);
                 }
@@ -61,7 +61,7 @@
                 _taskDbContext.taskCommands.Add(tcm);
                 await _taskDbContext.SaveChangesAsync();
                 response.Data = $"Your task Command {process} was successfully updated";
-                response.success = true;
+                response.Success = true;
                 response.message = "";
 
                 return Ok(response);
@@ -69,7 +69,7 @@
             catch (Exception ex)
             {
                 response.Data = "Your task Command was not successfully updated.";
-                response.success = false;
+                response.Success = false;
                 response.message = ex.Message;
                 return BadRequest(response);
             }

@@ -18,7 +18,7 @@
                 public async Task<ActionResult<ServiceResponse<string>>> OrderManager(string taskid)
                 {
                     var response = await _excuteService.OrderManager(taskid);
-                    if (!response.success)
+                    if (!response.Success)
                     {
                         return BadRequest(response);
                     }

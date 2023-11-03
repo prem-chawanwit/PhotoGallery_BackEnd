@@ -18,7 +18,7 @@ public class CreateTaskController : ControllerBase
     public async Task<ActionResult<ServiceResponse<string>>> CreateTask([FromForm] TaskOrderDataDTO Data)
     {
         var response = await _createTask.CreateTask(Data,true);
-        if (!response.success)
+        if (!response.Success)
         {
             return BadRequest(response);
         }
@@ -120,7 +120,7 @@ public class CreateTaskController : ControllerBase
         #endregion mockupRequest
         var response = await _createTask.CreateTask(data, false);
 
-        if (!response.success)
+        if (!response.Success)
         {
             return BadRequest(response);
         }
@@ -172,12 +172,12 @@ public class CreateTaskController : ControllerBase
             if (!isInvoked)
             {
                 response.Data = reason;
-                response.success = false;
+                response.Success = false;
                 return Ok(response);
             }
             // Return an immediate response without waiting for the long-running task.
             response.Data = $"Create & Executed Task id = '{response.Data}', process started in the background.";
-            response.success = true;
+            response.Success = true;
             return Ok("ETL process started in the background.");
         }
         //return Ok(response);
@@ -258,7 +258,7 @@ public class CreateTaskController : ControllerBase
             sectionConvertSettingData = sectionConvertSettingDataDTO
         };
         var response = await _createTask.CreateTask(data,false);
-        if (!response.success)
+        if (!response.Success)
         {
             return BadRequest(response);
         }

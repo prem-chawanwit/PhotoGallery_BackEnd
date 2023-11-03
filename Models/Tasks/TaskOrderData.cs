@@ -6,7 +6,5 @@
         [Key]
         public int id { get; set; }
         public SectionUploadPathData sectionUploadPathData { get; set; }
-        public SectionUploadSettingData sectionUploadSettingData { get; set; }
-        public SectionConvertSettingData sectionConvertSettingData { get; set; }
     }
 }

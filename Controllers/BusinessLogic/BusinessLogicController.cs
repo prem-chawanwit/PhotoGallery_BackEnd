@@ -15,7 +15,7 @@
         public async Task<ActionResult<ServiceResponse<string>>> TranformProduct(string plan,bool isActive)
         {
             var response = await _tranFromService.TranformProduct("-", plan,isActive);
-            if (!response.success)
+            if (!response.Success)
             {
                 return BadRequest(response);
             }
@@ -25,7 +25,7 @@
         public async Task<ActionResult<ServiceResponse<string>>> TranformStockWafer(string plan, bool isActive)
         {
             var response = await _tranFromService.TranformStockWafer("-", plan, isActive);
-            if (!response.success)
+            if (!response.Success)
             {
                 return BadRequest(response);
             }
@@ -35,7 +35,7 @@
         public async Task<ActionResult<ServiceResponse<string>>> ClearPlan(string plan)
         {
             var response = await _tableService.ClearAllTablesByUploadPlan(plan);
-            if (!response.success)
+            if (!response.Success)
             {
                 return BadRequest(response);
             }

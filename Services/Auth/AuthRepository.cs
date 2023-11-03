@@ -15,49 +15,49 @@
         public async Task<ServiceResponse<string>> Login(string username, string password)
         {
             var response = new ServiceResponse<string>();
-            var user = await _taskDbContext.users
+            var User = await _taskDbContext.users
                 .Include(u => u.userAccessLevels)
                 .FirstOrDefaultAsync(u => u.username.ToLower().Equals(username.ToLower()));
 
-            if (user is null)
+            if (User is null)
             {
-                response.success = false;
+                response.Success = false;
 
-                response.message = "User not found.";
+                response.Message = "User not found.";
 
             }
-            else if (!VerifypasswordHash(password, user.passwordHash, user.passwordSalt))
+            else if (!VerifypasswordHash(password, User.passwordHash, User.passwordSalt))
             {
-                response.success = false;
+                response.Success = false;
 
-                response.message = "Wrong Password.";
+                response.Message = "Wrong Password.";
             }
             else
             {
-                response.Data = CreateToken(user);
-                response.user = _mapper.Map<UserDto>(user);
+                response.Data = CreateToken(User);
+                response.User = _mapper.Map<UserDto>(User);
             }
             return response;
         }
 
-        public async Task<ServiceResponse<int>> Register(User user, string password)
+        public async Task<ServiceResponse<int>> Register(User User, string password)
         {
             var response = new ServiceResponse<int>();
-            if (await UserExists(user.username))
+            if (await UserExists(User.username))
             {
-                response.success = false;
-                response.message = "User already exists";
+                response.Success = false;
+                response.Message = "User already exists";
                 return response;
             }
             CreatepasswordHash(password, out byte[] passwordHash, out byte[] passwordSalt);
-            user.passwordHash = passwordHash;
-            user.passwordSalt = passwordSalt;
-            user.userAccessLevelid = 99;
+            User.passwordHash = passwordHash;
+            User.passwordSalt = passwordSalt;
+            User.userAccessLevelid = 99;
 
-            _taskDbContext.users.Add(user);
+            _taskDbContext.users.Add(User);
             await _taskDbContext.SaveChangesAsync();
 
-            response.Data = user.id;
+            response.Data = User.id;
             return response;
         }
 
@@ -88,12 +88,12 @@
             }
         }
 
-        private string CreateToken(User user)
+        private string CreateToken(User User)
         {
             var claims = new List<Claim>
             {
-                new Claim(ClaimTypes.NameIdentifier, user.id.ToString()),
-                new Claim(ClaimTypes.Name, user.username)
+                new Claim(ClaimTypes.NameIdentifier, User.id.ToString()),
+                new Claim(ClaimTypes.Name, User.username)
             };
 
             var appSettingsToken = _configuration.GetSection("AppSettings:Token").Value;
@@ -121,20 +121,20 @@
         public async Task<ServiceResponse<string>> ResetPassword(string username, string password)
         {
             var response = new ServiceResponse<string>();
-            var user = await _taskDbContext.users.FirstOrDefaultAsync(u => u.username.ToLower().Equals(username.ToLower()));
-            if (user is null)
+            var User = await _taskDbContext.users.FirstOrDefaultAsync(u => u.username.ToLower().Equals(username.ToLower()));
+            if (User is null)
             {
-                response.success = false;
-                response.message = "User not found.";
+                response.Success = false;
+                response.Message = "User not found.";
 
             }
             else
             {
                 CreatepasswordHash(password, out byte[] passwordHash, out byte[] passwordSalt);
-                user.passwordHash = passwordHash;
-                user.passwordSalt = passwordSalt;
+                User.passwordHash = passwordHash;
+                User.passwordSalt = passwordSalt;
                 await _taskDbContext.SaveChangesAsync();
-                response.Data = "Reset Password success";
+                response.Data = "Reset Password Success";
             }
             return response;
         }
@@ -146,8 +146,8 @@
             response.Data = dbusers.Select(u => _mapper.Map<UserDto>(u)).ToList();
             if (response.Data.Count == 0)
             {
-                response.success = false;
-                response.message = "No Data found";
+                response.Success = false;
+                response.Message = "No Data found";
             }
             return response;
         }
@@ -158,12 +158,12 @@
 
             try
             {
-                var user = await _taskDbContext.users.FirstOrDefaultAsync(c => c.username.ToLower() == username.ToLower());
-                if (user is null)
+                var User = await _taskDbContext.users.FirstOrDefaultAsync(c => c.username.ToLower() == username.ToLower());
+                if (User is null)
                 {
                     throw new Exception($"Character with username: '{username}' not found.");
                 }
-                _taskDbContext.users.Remove(user);
+                _taskDbContext.users.Remove(User);
                 await _taskDbContext.SaveChangesAsync();
 
                 serviceRespone.Data = await _taskDbContext.users
@@ -172,8 +172,8 @@
             }
             catch (Exception ex)
             {
-                serviceRespone.success = false;
-                serviceRespone.message = ex.Message;
+                serviceRespone.Success = false;
+                serviceRespone.Message = ex.Message;
             }
 
             return serviceRespone;
@@ -185,12 +185,12 @@
 
             try
             {
-                var user = await _taskDbContext.users
+                var User = await _taskDbContext.users
                     .FirstOrDefaultAsync(c => c.username.ToLower() == username.ToLower());
-                if (user is null)
+                if (User is null)
                 {
-                    serviceRespone.success = false;
-                    serviceRespone.message = $"username: '{username}' not found.";
+                    serviceRespone.Success = false;
+                    serviceRespone.Message = $"username: '{username}' not found.";
                     return serviceRespone;
                 }
                 var accessLevelid = await _taskDbContext.userAccessLevel
@@ -198,12 +198,12 @@
 
                 if (accessLevelid is null)
                 {
-                    serviceRespone.success = false;
-                    serviceRespone.message = $"accessLevel Name: '{accessLevelName}' not found.";
+                    serviceRespone.Success = false;
+                    serviceRespone.Message = $"accessLevel Name: '{accessLevelName}' not found.";
                     return serviceRespone;
                 }
 
-                user!.userAccessLevelid = (int)accessLevelid!.id;
+                User!.userAccessLevelid = (int)accessLevelid!.id;
                 await _taskDbContext.SaveChangesAsync();
 
                 serviceRespone.Data = await _taskDbContext.users
@@ -213,8 +213,8 @@
             }
             catch (Exception ex)
             {
-                serviceRespone.success = false;
-                serviceRespone.message = ex.Message;
+                serviceRespone.Success = false;
+                serviceRespone.Message = ex.Message;
             }
 
             return serviceRespone;

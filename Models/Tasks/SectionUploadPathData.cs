@@ -7,6 +7,8 @@
         public int id { get; set; }
         public string dataSource { get; set; }
         public string basePath { get; set; } = string.Empty;
-        public string? nameFile { get; set; } = string.Empty;
+        public string nameFile { get; set; } = string.Empty;
+        public DateTime timeUpdated { get; set; }
+
     }
 }

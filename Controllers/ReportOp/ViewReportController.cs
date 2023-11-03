@@ -20,7 +20,7 @@ namespace PhotoGallery_BackEnd.Controllers.ReportOp
         public async Task<ActionResult<ServiceResponse<IEnumerable<WorkToListByResource_DTO>>>> GetWorkToListByResource(string datasetId, string orderNo)
         {
             var response = await _reportOpService.GetWorkToListByResource(datasetId, orderNo);
-            if (!response.success)
+            if (!response.Success)
             {
                 return BadRequest(response);
             }
@@ -31,7 +31,7 @@ namespace PhotoGallery_BackEnd.Controllers.ReportOp
         public async Task<ActionResult<ReportServiceResponse<IEnumerable<WorkToListByResource_DTO>>>>GetWorkToListByResource_2(string datasetId,[FromBody] ClientRequest request)
         {
             var response = await _reportOpService.GetWorkToListByResource_2(datasetId, request);
-            if (!response.success)
+            if (!response.Success)
             {
                 return BadRequest(response);
             }
@@ -41,7 +41,7 @@ namespace PhotoGallery_BackEnd.Controllers.ReportOp
         public async Task<ActionResult<ReportServiceResponse<IEnumerable<LateOrders_DTO>>>> GetLateOrder2(string datasetId)
         {
             var response = await _reportOpService.GetLateOrder(datasetId);
-            if (!response.success)
+            if (!response.Success)
             {
                 return BadRequest(response);
             }
@@ -58,7 +58,7 @@ namespace PhotoGallery_BackEnd.Controllers.ReportOp
         public async Task<ActionResult<ServiceResponse<IEnumerable<MaterialUsage_DTO>>>> GetMaterailUsage(string datasetId)
         {
             var response = await _reportOpService.GetMaterialUsage(datasetId);
-            if (!response.success)
+            if (!response.Success)
             {
                 return BadRequest(response);
             }
@@ -68,7 +68,7 @@ namespace PhotoGallery_BackEnd.Controllers.ReportOp
         public async Task<ActionResult<ServiceResponse<IEnumerable<ApPlan_DTO>>>> GetApPlan()
         {
             var response = await _reportOpService.GetApPlan();
-            if (!response.success)
+            if (!response.Success)
             {
                 return BadRequest(response);
             }
@@ -79,7 +79,7 @@ namespace PhotoGallery_BackEnd.Controllers.ReportOp
         public async Task<ActionResult<ReportServiceResponse<IEnumerable<WaferInput_DTO>>>> GetWaferInput()
         {
             var response = await _reportOpService.GetWaferInput();
-            if (!response.success)
+            if (!response.Success)
             {
                 return BadRequest(response);
             }
@@ -89,7 +89,7 @@ namespace PhotoGallery_BackEnd.Controllers.ReportOp
         public async Task<ActionResult<ReportServiceResponse<IEnumerable<Bwh_DTO>>>> GetBwh()
         {
             var response = await _reportOpService.GetBwh();
-            if (!response.success)
+            if (!response.Success)
             {
                 return BadRequest(response);
             }
@@ -99,7 +99,7 @@ namespace PhotoGallery_BackEnd.Controllers.ReportOp
         public async Task<ActionResult<ServiceResponse<IEnumerable<WaferInput_DTO>>>> GetWaferInputByLot(string waferLot)
         {
             var response = await _reportOpService.GetWaferInputByLot(waferLot);
-            if (!response.success)
+            if (!response.Success)
             {
                 return BadRequest(response);
             }
@@ -109,7 +109,7 @@ namespace PhotoGallery_BackEnd.Controllers.ReportOp
         public async Task<ActionResult<ServiceResponse<string>>> SetWaferInputFlag([FromBody] WaferFlagRequestRequest requestFlag)
         {
             var response = await _reportOpService.SetWaferInputFlag(requestFlag);
-            if (!response.success)
+            if (!response.Success)
             {
                 return BadRequest(response);
             }
@@ -119,7 +119,7 @@ namespace PhotoGallery_BackEnd.Controllers.ReportOp
         public async Task<ActionResult<ServiceResponse<string>>> ClearWaferInputFlag()
         {
             var response = await _reportOpService.ClearWaferInputFlag();
-            if (!response.success)
+            if (!response.Success)
             {
                 return BadRequest(response);
             }
@@ -130,7 +130,7 @@ namespace PhotoGallery_BackEnd.Controllers.ReportOp
         public async Task<ActionResult<ServiceResponse<IEnumerable<DatasetId_DTO>>>> GetDatasetId()
         {
             var response = await _reportOpService.GetDatasetId();
-            if (!response.success)
+            if (!response.Success)
             {
                 return BadRequest(response);
             }
