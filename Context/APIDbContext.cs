@@ -8,7 +8,9 @@
         public DbSet<TaskReviewData> taskReviewData { get; set; }
         public DbSet<User> users => Set<User>();
         public DbSet<UserAccessLevel> userAccessLevel => Set<UserAccessLevel>();
+        public DbSet<LoginTimming> loginTimming => Set<LoginTimming>();
         public DbSet<SectionUploadPathData> uploadPathData => Set<SectionUploadPathData>();
+
         public APIDbContext(DbContextOptions<APIDbContext> options) : base(options)
         {
 
@@ -124,6 +126,14 @@
             {
                 record.extractSta = "Suspended";
             }
+            var recordsToUpdate4 = await loginTimming
+                .Where(t => t.isLoggedIn == true)
+                .ToListAsync();
+            foreach (var record in recordsToUpdate4)
+            {
+                record.isLoggedIn = false;
+            }
+
             await SaveChangesAsync();
         }
         private void CreatepasswordHash(string password, out byte[] passwordHash, out byte[] passwordSalt)

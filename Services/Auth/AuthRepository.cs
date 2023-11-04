@@ -1,9 +1,11 @@
-﻿using System.Text;
+﻿using PhotoGallery_BackEnd.Models.Users;
+using System.Text;
 
 namespace PhotoGallery_BackEnd.Services.Auth
 {
     public class AuthRepository : IAuthRepository
     {
+        private int Minites_Of_Token_Expire = 1;
         private readonly APIDbContext _context;
         private readonly IConfiguration _configuration;
         private readonly IMapper _mapper;
@@ -24,29 +26,165 @@ namespace PhotoGallery_BackEnd.Services.Auth
             if (user is null)
             {
                 response.Success = false;
-
+                response.User = new UserDto();
                 response.Message = "User not found.";
 
             }
             else if (!VerifypasswordHash(password, user.passwordHash, user.passwordSalt))
             {
                 response.Success = false;
-
+                response.User = new UserDto();
                 response.Message = "Wrong Password.";
             }
             else
             {
+                var userLoggedIn = await _context.loginTimming
+                    .Where(t => t.username.ToLower().Equals(username.ToLower()))
+                    .FirstOrDefaultAsync();
+
+                var currentTime = DateTime.UtcNow;
+                var expirationTime = DateTime.UtcNow.AddMinutes(Minites_Of_Token_Expire);
+
+                if (userLoggedIn == null)
+                {
+                    // User login timing information doesn't exist, create a new record.
+                    var loginTime = new LoginTimming
+                    {
+                        username = username,
+                        lastLoggedIn = currentTime,
+                        expireToken = expirationTime,
+                        isLoggedIn = true,
+                    };
+
+                    _context.loginTimming.Add(loginTime);
+                    response.User = new UserDto
+                    {
+                        username = user.username,
+                        userAccessLevelid = user.userAccessLevelid,
+                        roles = user.userAccessLevels.accessLevel.ToString()
+                };
+                }
+                else
+                {
+                    // Update the existing user login timing information.
+                    userLoggedIn.lastLoggedIn = currentTime;
+                    userLoggedIn.expireToken = expirationTime;
+                    userLoggedIn.isLoggedIn = true;
+                    response.User = new UserDto();
+                }
+
+                await _context.SaveChangesAsync();
+                //
                 response.Data = CreateToken(user);
+
                 response.User = _mapper.Map<UserDto>(user);
             }
             return response;
         }
+        public async Task<ServiceResponse<string>> Logout(string username)
+        {
+            var response = new ServiceResponse<string>();
+            var user = await _context.users
+                .Include(u => u.userAccessLevels)
+                .FirstOrDefaultAsync(u => u.username.ToLower().Equals(username.ToLower()));
+
+            if (user is null)
+            {
+                response.Success = false;
+                response.User = new UserDto();
+                response.Message = "User not found.";
+            }
+            else
+            {
+                var userLoggedIn = await _context.loginTimming
+                    .Where(t => t.username.ToLower().Equals(username.ToLower()))
+                    .FirstOrDefaultAsync();
+
+                if (userLoggedIn != null)
+                {
+                    var currentTime = DateTime.UtcNow;
+
+                    // Set a very short expiration time to immediately invalidate the token
+                    userLoggedIn.expireToken = currentTime.AddSeconds(5); // Set it to expire in 5 seconds
+
+                    userLoggedIn.isLoggedIn = false;
+
+                    await _context.SaveChangesAsync();
+                }
+            }
+            response.Data = $"{username} Logout. successfully.";
+            response.User = new UserDto();
+            response.Success = true;
+            response.Message = $"-";
+            return response;
+        }
+        public async Task<ServiceResponse<bool>> CheckUser(string username)
+        {
+            var response = new ServiceResponse<bool>();
+            var user = await _context.users
+                .Include(u => u.userAccessLevels)
+                .FirstOrDefaultAsync(u => u.username.ToLower().Equals(username.ToLower()));
+
+            if (user is null)
+            {
+                response.Data = false;
+                response.User = new UserDto();
+                response.Success = false;
+                response.Message = "User not found.";
+            }
+            else
+            {
+                var userLoggedIn = await _context.loginTimming.AsNoTracking()
+                    .Where(t => t.username.ToLower().Equals(username.ToLower()))
+                    .FirstOrDefaultAsync();
+
+                if (userLoggedIn != null)
+                {
+                    var currentTime = DateTime.UtcNow;
+
+                    if (currentTime >= userLoggedIn.expireToken)
+                    {
+                        // The session has expired
+                        userLoggedIn.isLoggedIn = false;
+
+                        await _context.SaveChangesAsync();
+
+                        response.Data = false;
+                        response.User = new UserDto();
+                        response.Success = true;
+                        response.Message = $"{username} session has expired.";
+                    }
+                    else
+                    {
+                        // The session is still valid
+                        response.Data = true;
+                        response.User = new UserDto
+                        {
+                            username = user.username,
+                            userAccessLevelid = user.userAccessLevelid,
+                            roles = user.userAccessLevels.accessLevel.ToString()
+                        };
+                        response.Success = true;
+                        response.Message = $"{username} session is still valid.";
+                    }
+                }
+                else
+                {
+                    response.Data = false;
+                    response.Success = false;
+                    response.Message = "User's session not found.";
+                }
+            }
+            return response;
+        }
+
         public async Task<ServiceResponse<int>> Register(User user, string password)
         {
             var response = new ServiceResponse<int>();
             if (await UserExists(user.username))
             {
                 response.Success = false;
+                response.User = new UserDto();
                 response.Message = "User already exists";
                 return response;
             }
@@ -85,7 +223,6 @@ namespace PhotoGallery_BackEnd.Services.Auth
                 return computedHash.SequenceEqual(passwordHash);
             }
         }
-
         private string CreateToken(User user)
         {
             var claims = new List<Claim>
@@ -101,7 +238,7 @@ namespace PhotoGallery_BackEnd.Services.Auth
 
             var token = new JwtSecurityToken(
                     claims: claims,
-                    expires: DateTime.Now.AddDays(1),
+                    expires: DateTime.Now.AddMinutes(Minites_Of_Token_Expire),
                     signingCredentials: creds
                 );
 
@@ -122,6 +259,11 @@ namespace PhotoGallery_BackEnd.Services.Auth
             else
             {
                 CreatepasswordHash(password, out byte[] passwordHash, out byte[] passwordSalt);
+
+                var userLoggedIn = await _context.loginTimming
+                                            .Where(t => t.username.ToLower().Equals(username.ToLower()))
+                                            .FirstOrDefaultAsync();
+
                 user.passwordHash = passwordHash;
                 user.passwordSalt = passwordSalt;
                 await _context.SaveChangesAsync();

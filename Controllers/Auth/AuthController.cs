@@ -1,16 +1,28 @@
-﻿namespace PhotoGallery_BackEnd.Controllers.Auth
+﻿using Azure.Core;
+
+namespace PhotoGallery_BackEnd.Controllers.Auth
 {
     [ApiController]
     [Route("api/[controller]")]
     public class AuthController : ControllerBase
     {
         private IAuthRepository _authRepo;
-
-        public AuthController(IAuthRepository authRepo)
+        private IHttpContextAccessor _httpContextAccessor;
+        public AuthController(IAuthRepository authRepo, IHttpContextAccessor httpContextAccessor)
         {
             _authRepo = authRepo;
+            _httpContextAccessor = httpContextAccessor;
         }
-
+        [HttpGet("Checkuser")]
+        public async Task<ActionResult<ServiceResponse<bool>>> Checkuser(string username)
+        {
+            var response = await _authRepo.CheckUser(username);
+            if (!response.Success)
+            {
+                return BadRequest(response);
+            }
+            return Ok(response);
+        }
         [HttpPost("Register")]
         public async Task<ActionResult<ServiceResponse<int>>> Register(UserRegisterDto request)
         {
@@ -34,7 +46,16 @@
             }
             return Ok(response);
         }
-
+        [HttpPost("Logout")]
+        public async Task<ActionResult<ServiceResponse<int>>> Logout(string username)
+        {
+            var response = await _authRepo.Logout(username);
+            if (!response.Success)
+            {
+                return BadRequest(response);
+            }
+            return Ok(response);
+        }
         [HttpPost("ResetPassword")]
         public async Task<ActionResult<ServiceResponse<int>>> ResetPassword(UserLoginDto request)
         {

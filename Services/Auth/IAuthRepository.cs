@@ -4,6 +4,8 @@
     {
         Task<ServiceResponse<int>> Register(User user, string password);
         Task<ServiceResponse<string>> Login(string username, string password);
+        Task<ServiceResponse<string>> Logout(string username);
+
         Task<ServiceResponse<string>> ResetPassword(string username, string password);
 
         Task<ServiceResponse<List<UserDto>>> GetAllUser();
@@ -13,5 +15,6 @@
         Task<ServiceResponse<List<UserDto>>> UpdateUser(string username, string accessLevelName);
 
         Task<bool> UserExists(string username);
+        Task<ServiceResponse<bool>> CheckUser(string username);
     }
 }
