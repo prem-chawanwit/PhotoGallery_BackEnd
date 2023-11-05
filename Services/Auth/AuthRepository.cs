@@ -41,9 +41,8 @@ namespace PhotoGallery_BackEnd.Services.Auth
                 var userLoggedIn = await _context.loginTimming
                     .Where(t => t.username.ToLower().Equals(username.ToLower()))
                     .FirstOrDefaultAsync();
-
-                var currentTime = DateTime.UtcNow;
-                var expirationTime = DateTime.UtcNow.AddMinutes(Minites_Of_Token_Expire);
+                var currentTime = DateTime.Now;
+                var expirationTime = DateTime.Now.AddMinutes(Minites_Of_Token_Expire);
 
                 if (userLoggedIn == null)
                 {
@@ -102,7 +101,7 @@ namespace PhotoGallery_BackEnd.Services.Auth
 
                 if (userLoggedIn != null)
                 {
-                    var currentTime = DateTime.UtcNow;
+                    var currentTime = DateTime.Now;
 
                     // Set a very short expiration time to immediately invalidate the token
                     userLoggedIn.expireToken = currentTime.AddSeconds(5); // Set it to expire in 5 seconds
@@ -140,7 +139,7 @@ namespace PhotoGallery_BackEnd.Services.Auth
 
                 if (userLoggedIn != null)
                 {
-                    var currentTime = DateTime.UtcNow;
+                    var currentTime = DateTime.Now;
 
                     if (currentTime >= userLoggedIn.expireToken)
                     {
@@ -156,16 +155,31 @@ namespace PhotoGallery_BackEnd.Services.Auth
                     }
                     else
                     {
-                        // The session is still valid
-                        response.Data = true;
-                        response.User = new UserDto
+                        if(!userLoggedIn.isLoggedIn)
                         {
-                            username = user.username,
-                            userAccessLevelid = user.userAccessLevelid,
-                            roles = user.userAccessLevels.accessLevel.ToString()
-                        };
-                        response.Success = true;
-                        response.Message = $"{username} session is still valid.";
+                            // The session has expired
+                            userLoggedIn.isLoggedIn = false;
+
+                            await _context.SaveChangesAsync();
+
+                            response.Data = false;
+                            response.User = new UserDto();
+                            response.Success = true;
+                            response.Message = $"{username} session has expired.";
+                        }
+                        else
+                        {
+                            // The session is still valid
+                            response.Data = true;
+                            response.User = new UserDto
+                            {
+                                username = user.username,
+                                userAccessLevelid = user.userAccessLevelid,
+                                roles = user.userAccessLevels.accessLevel.ToString()
+                            };
+                            response.Success = true;
+                            response.Message = $"{username} session is still valid.";
+                        }
                     }
                 }
                 else
