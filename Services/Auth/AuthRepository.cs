@@ -5,7 +5,7 @@ namespace PhotoGallery_BackEnd.Services.Auth
 {
     public class AuthRepository : IAuthRepository
     {
-        private int Minites_Of_Token_Expire = 1;
+        private int Minites_Of_Token_Expire = 20;
         private readonly APIDbContext _context;
         private readonly IConfiguration _configuration;
         private readonly IMapper _mapper;
@@ -41,8 +41,8 @@ namespace PhotoGallery_BackEnd.Services.Auth
                 var userLoggedIn = await _context.loginTimming
                     .Where(t => t.username.ToLower().Equals(username.ToLower()))
                     .FirstOrDefaultAsync();
-                var currentTime = DateTime.Now;
-                var expirationTime = DateTime.Now.AddMinutes(Minites_Of_Token_Expire);
+                var currentTime = DateTime.UtcNow;
+                var expirationTime = DateTime.UtcNow.AddMinutes(Minites_Of_Token_Expire);
 
                 if (userLoggedIn == null)
                 {
@@ -101,7 +101,7 @@ namespace PhotoGallery_BackEnd.Services.Auth
 
                 if (userLoggedIn != null)
                 {
-                    var currentTime = DateTime.Now;
+                    var currentTime = DateTime.UtcNow;
 
                     // Set a very short expiration time to immediately invalidate the token
                     userLoggedIn.expireToken = currentTime.AddSeconds(5); // Set it to expire in 5 seconds
@@ -139,7 +139,7 @@ namespace PhotoGallery_BackEnd.Services.Auth
 
                 if (userLoggedIn != null)
                 {
-                    var currentTime = DateTime.Now;
+                    var currentTime = DateTime.UtcNow;
 
                     if (currentTime >= userLoggedIn.expireToken)
                     {
@@ -252,7 +252,7 @@ namespace PhotoGallery_BackEnd.Services.Auth
 
             var token = new JwtSecurityToken(
                     claims: claims,
-                    expires: DateTime.Now.AddMinutes(Minites_Of_Token_Expire),
+                    expires: DateTime.UtcNow.AddMinutes(Minites_Of_Token_Expire),
                     signingCredentials: creds
                 );
 
