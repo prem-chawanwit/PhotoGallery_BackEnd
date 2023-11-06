@@ -1,7 +1,4 @@
-﻿using PhotoGallery_BackEnd.Models.Users;
-using System.Text;
-
-namespace PhotoGallery_BackEnd.Services.Auth
+﻿namespace PhotoGallery_BackEnd.Services.Auth
 {
     public class AuthRepository : IAuthRepository
     {

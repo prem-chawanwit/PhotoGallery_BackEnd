@@ -5,13 +5,14 @@ global using Microsoft.AspNetCore.Mvc;
 global using System.ComponentModel.DataAnnotations;
 global using System.ComponentModel.DataAnnotations.Schema;
 global using System.Security.Claims;
-
 // context
 global using PhotoGallery_BackeEnd.Context;
 // controller
 global using PhotoGallery_BackEnd.Controllers.Test;
 // service
+global using IAuthRepository = PhotoGallery_BackEnd.Services.Auth.IAuthRepository;
 global using PhotoGallery_BackEnd.Services.Auth;
+global using PhotoGallery_BackEnd.Services.Gallery;
 // model
 global using PhotoGallery_BackEnd.Models.ReportRequest;
 global using PhotoGallery_BackEnd.Models.ServiceResponse;
@@ -24,6 +25,7 @@ global using PhotoGallery_BackEnd.Mapper;
 global using PhotoGallery_BackEnd.DTOs.InitialComponents;
 global using PhotoGallery_BackEnd.DTOs.Tasks;
 global using PhotoGallery_BackEnd.DTOs.Users;
+global using PhotoGallery_BackEnd.DTOs.Gallery;
 // lib
 global using Microsoft.Extensions.Configuration;
 global using System.Configuration;
@@ -42,7 +44,11 @@ global using Swashbuckle.AspNetCore.Filters;
 global using Microsoft.AspNetCore.Authentication.JwtBearer;
 global using Microsoft.AspNetCore.ResponseCompression;
 global using System.Security.Cryptography;
-using System.Text;
+global using System.Text;
+global using ServiceStack.Auth;
+global using PhotoGallery_BackEnd.Models.Users;
+global using ServiceStack.Auth;
+global using System.Text;
 
 // Minimal API section
 var builder = WebApplication.CreateBuilder(args);
@@ -108,6 +114,7 @@ builder.Services.AddHttpContextAccessor();
 // Add Service
 // builder.Services.AddScoped<IGetDataService, GetDataService>();
 builder.Services.AddScoped<IAuthRepository, AuthRepository>();
+builder.Services.AddScoped<IGallery, Gallery>();
 /*builder.Services.AddScoped<ICreateTaskService, CreateTaskService>();
 builder.Services.AddScoped<IExcuteTaskService, ExcuteTaskService>();
 builder.Services.AddScoped<IViewTaskService, ViewTaskService>();

@@ -2,7 +2,7 @@
 {
     public class TaskOrderDataDTO
     {
-        public SectionUploadPathDataDTO? sectionUploadPathData { get; set; }
+        public PhotoDTO? sectionUploadPathData { get; set; }
         public SectionUploadSettingDataDTO sectionUploadSettingData { get; set; }
         public SectionConvertSettingDataDTO sectionConvertSettingData { get; set; }
     }
