@@ -14,7 +14,6 @@ global using IAuthRepository = PhotoGallery_BackEnd.Services.Auth.IAuthRepositor
 global using PhotoGallery_BackEnd.Services.Auth;
 global using PhotoGallery_BackEnd.Services.Gallery;
 // model
-global using PhotoGallery_BackEnd.Models.ReportRequest;
 global using PhotoGallery_BackEnd.Models.ServiceResponse;
 global using PhotoGallery_BackEnd.Models.Tasks;
 global using PhotoGallery_BackEnd.Models.Test;
@@ -22,8 +21,6 @@ global using PhotoGallery_BackEnd.Models.Users;
 global using TaskStatus = PhotoGallery_BackEnd.Models.Tasks.TaskStatus;
 global using PhotoGallery_BackEnd.Mapper;
 // dtos
-global using PhotoGallery_BackEnd.DTOs.InitialComponents;
-global using PhotoGallery_BackEnd.DTOs.Tasks;
 global using PhotoGallery_BackEnd.DTOs.Users;
 global using PhotoGallery_BackEnd.DTOs.Gallery;
 // lib
