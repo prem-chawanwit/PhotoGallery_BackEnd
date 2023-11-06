@@ -96,7 +96,7 @@ namespace PhotoGallery_BackeEnd.Context
                 new User
                 {
                     id = 6,
-                    username = "unknow",
+                    username = "unknown",
                     passwordHash = passwordHash, // Replace with the actual hashed password
                     passwordSalt = passwordSalt,    // Replace with the actual password salt
                     userAccessLevelid = 99 // Assuming SuperAdmin userAccessLevelid is 1

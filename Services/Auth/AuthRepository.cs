@@ -188,8 +188,7 @@
             }
             return response;
         }
-
-        public async Task<ServiceResponse<int>> Register(User user, string password)
+       public async Task<ServiceResponse<int>> Register(User user, string password)
         {
             var response = new ServiceResponse<int>();
             if (await UserExists(user.username))

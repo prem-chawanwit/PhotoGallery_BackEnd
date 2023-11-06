@@ -72,7 +72,8 @@ namespace PhotoGallery_BackEnd.Services.Gallery
                         fileName = request.requestFileName;
                         uploadedFileNames.Add(fileName);
                         uploadedFileSystemNames.Add(systemfileName);
-                        uploadedFileSizes.Add(file.Length.ToString());
+                        double sizeInMB = (double)file.Length / (1024 * 1024); // Convert bytes to megabytes
+                        uploadedFileSizes.Add(sizeInMB.ToString("0.00")); // Format the size to two decimal places
                     }
                     else
                     {
@@ -134,25 +135,279 @@ namespace PhotoGallery_BackEnd.Services.Gallery
                 await _context.SaveChangesAsync();
 
                 var userDTO = await CheckUser(username);
-                response.Data = taskid;
+                response.Data = "Upload successfully.";
                 response.User = userDTO.User;
             }
             catch (Exception ex)
             {
+                response.Data = "Upload un-successfully.";
                 response.Success = false;
                 response.User = new UserDto();
                 response.Message = ex.Message;
             }
             return response;
         }
-        public async Task<ServiceResponse<List<PhotoDTO>>> GetPhotoAll()
+        public async Task<ServiceResponse<List<GetPhotoDTO>>> GetPhotoAll(string username)
+        {
+            var response = new ServiceResponse<List<GetPhotoDTO>>();
+            try
+            {
+                var user = await _context.users
+                                        .Include(u => u.userAccessLevels)
+                                        .FirstOrDefaultAsync(u => u.username.ToLower().Equals(username.ToLower()));
+
+                if (user != null)
+                {
+                    var userDTO = await CheckUser(username);
+
+                    // Retrieve the list of images from the database
+                    var photos = await _context.sectionUploadPathData.ToListAsync();
+
+                    // Create a response list of photos with image data
+                    var photoDTOs = new List<GetPhotoDTO>();
+                    foreach (var photo in photos)
+                    {
+                        var photoDTO = new GetPhotoDTO
+                        {
+                            fileId = photo.id.ToString(),
+                            fileName = photo.nameFile.ToString(),
+                            systemfileName = photo.nameFileSystem.ToString(),
+                            fileSize = photo.sizeFile.ToString(),
+                        };
+
+                        // Add the PhotoDTO to the response list
+                        photoDTOs.Add(photoDTO);
+                    }
+
+                    response.Data = photoDTOs;
+                    response.User = userDTO.User;
+                    response.Success = true;
+                    response.Message = "Photos retrieved successfully.";
+                }
+                else
+                {
+                    response.Data = new List<GetPhotoDTO>();
+                    response.User = new UserDto();
+                    response.Success = false;
+                    response.Message = "No photos found for the user.";
+                }
+            }
+            catch (Exception ex)
+            {
+                response.Data = null;
+                response.User = new UserDto();
+                response.Success = false;
+                response.Message = ex.Message;
+            }
+
+            return response;
+        }
+        public async Task<ServiceResponse<List<GetPhotoDTO>>> GetPhotoFilter(GetPhotoFilterDTO request)
+        {
+            var response = new ServiceResponse<List<GetPhotoDTO>>();
+            try
+            {
+                var username = request.username;
+                var user = await _context.users
+                                        .Include(u => u.userAccessLevels)
+                                        .FirstOrDefaultAsync(u => u.username.ToLower().Equals(username.ToLower()));
+
+                if (user != null)
+                {
+                    var userDTO = await CheckUser(username);
+
+                    // Retrieve the list of images from the database
+                    var photos = await _context.sectionUploadPathData.Where(p => p.nameFile.ToLower().Contains(request.requestFileName.ToLower())).ToListAsync();
+
+                    // Create a response list of photos with image data
+                    var photoDTOs = new List<GetPhotoDTO>();
+                    foreach (var photo in photos)
+                    {
+                        var photoDTO = new GetPhotoDTO
+                        {
+                            fileId = photo.id.ToString(),
+                            fileName = photo.nameFile.ToString(),
+                            systemfileName = photo.nameFileSystem.ToString(),
+                            fileSize = photo.sizeFile.ToString(),
+                        };
+
+                        // Add the PhotoDTO to the response list
+                        photoDTOs.Add(photoDTO);
+                    }
+
+                    response.Data = photoDTOs;
+                    response.User = userDTO.User;
+                    response.Success = true;
+                    response.Message = "Photos retrieved successfully.";
+                }
+                else
+                {
+                    response.Data = new List<GetPhotoDTO>();
+                    response.User = new UserDto();
+                    response.Success = false;
+                    response.Message = "No photos found for the user.";
+                }
+            }
+            catch (Exception ex)
+            {
+                response.Data = null;
+                response.User = new UserDto();
+                response.Success = false;
+                response.Message = ex.Message;
+            }
+
+            return response;
+        }
+        public async Task<ServiceResponse<List<GetPhotoDTO>>> GetPhotoFilter(string photoName)
         {
             throw new NotImplementedException();
         }
-        public async Task<ServiceResponse<List<PhotoDTO>>> GetPhotoFilter(string photoName)
+        public async Task<ServiceResponse<bool>> CheckUser(string username)
         {
-            throw new NotImplementedException();
+            var response = new ServiceResponse<bool>();
+            var user = await _context.users
+                .Include(u => u.userAccessLevels)
+                .FirstOrDefaultAsync(u => u.username.ToLower().Equals(username.ToLower()));
+
+            if (user is null)
+            {
+                response.Data = false;
+                response.User = new UserDto();
+                response.Success = false;
+                response.Message = "User not found.";
+            }
+            else
+            {
+                // The session is still valid
+                response.Data = true;
+                response.User = new UserDto
+                {
+                    username = user.username,
+                    userAccessLevelid = user.userAccessLevelid,
+                    roles = user.userAccessLevels.accessLevelName.ToString()
+                };
+            }
+            return response;
         }
+        public async Task<ServiceResponse<string>> EditPhotoName(EditPhotoDTO request)
+        {
+            var response = new ServiceResponse<string>();
+
+            if (request == null)
+            {
+                response.Data = "Edit fail.";
+                response.Success = false;
+                response.Message = "No data was provided.";
+                return response;
+            }
+
+            try
+            {
+                var username = request.username;
+
+                // Find the photo by fileId
+                var photo = await _context.sectionUploadPathData
+                    .FirstOrDefaultAsync(u => u.id == int.Parse(request.fileId));
+
+                if (photo != null)
+                {
+                    // Update the nameFile property
+                    photo.nameFile = request.fileName;
+
+                    // Save the changes to the database
+                    await _context.SaveChangesAsync();
+
+                    var userDTO = await CheckUser(username);
+
+                    response.Data = "Edit successfully.";
+                    response.User = userDTO.User;
+                }
+                else
+                {
+                    response.Data = "Edit fail.";
+                    response.Success = false;
+                    response.Message = "Photo not found.";
+                }
+            }
+            catch (Exception ex)
+            {
+                response.Data = "Edit unsuccessful.";
+                response.Success = false;
+                response.User = new UserDto();
+                response.Message = ex.Message;
+            }
+
+            return response;
+        }
+        public async Task<ServiceResponse<string>> DeletePhotoName(EditPhotoDTO request)
+        {
+            var response = new ServiceResponse<string>();
+
+            if (request == null)
+            {
+                response.Data = "Delete fail.";
+                response.User = new UserDto();
+                response.Success = false;
+                response.Message = "No data was provided.";
+                return response;
+            }
+
+            try
+            {
+                var username = request.username;
+
+                // Find the photo by fileId
+                var photo = await _context.sectionUploadPathData
+                    .FirstOrDefaultAsync(u => u.id == int.Parse(request.fileId));
+
+                if (photo != null)
+                {
+                    // Delete the photo
+                    _context.sectionUploadPathData.Remove(photo);
+
+                    // Save the changes to the database
+                    await _context.SaveChangesAsync();
+
+                    // Delete File
+                    var basePath = photo.basePath;
+                    var fileName = photo.nameFileSystem;
+                    var path = Path.Combine(basePath, fileName);
+                    // Delete File
+                    try
+                    {
+                        File.Delete(path);
+                    }catch(Exception ex)
+                    {
+                        response.Data = "Delete recored But unsuccessful to delete file.";
+                        response.Success = false;
+                        response.User = new UserDto();
+                        response.Message = ex.Message;
+
+                    }
+                    var userDTO = await CheckUser(username);
+
+                    response.Data = "Delete successfully.";
+                    response.User = userDTO.User;
+                }
+                else
+                {
+                    response.Data = "Delete fail.";
+                    response.Success = false;
+                    response.Message = "Photo not found.";
+                }
+            }
+            catch (Exception ex)
+            {
+                response.Data = "Delete unsuccessful.";
+                response.Success = false;
+                response.User = new UserDto();
+                response.Message = ex.Message;
+            }
+
+            return response;
+        }
+
+        //--------------------------------------Relate Methods--------------------------------------
         private string GenerateTaskid(bool isNormal)
         {
             var timestamp = DateTime.Now.ToString("yyyyMMddHHmmss");
@@ -240,32 +495,7 @@ namespace PhotoGallery_BackEnd.Services.Gallery
                 writer.WriteLine("----------");
             }
         }
-        public async Task<ServiceResponse<bool>> CheckUser(string username)
-        {
-            var response = new ServiceResponse<bool>();
-            var user = await _context.users
-                .Include(u => u.userAccessLevels)
-                .FirstOrDefaultAsync(u => u.username.ToLower().Equals(username.ToLower()));
 
-            if (user is null)
-            {
-                response.Data = false;
-                response.User = new UserDto();
-                response.Success = false;
-                response.Message = "User not found.";
-            }
-            else
-            {
-                // The session is still valid
-                response.Data = true;
-                response.User = new UserDto
-                {
-                    username = user.username,
-                    userAccessLevelid = user.userAccessLevelid,
-                    roles = user.userAccessLevels.accessLevelName.ToString()
-                };
-            }
-            return response;
-        }
+
     }
 }

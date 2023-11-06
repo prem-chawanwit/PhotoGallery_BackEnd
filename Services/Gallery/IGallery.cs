@@ -3,7 +3,11 @@
     public interface IGallery
     {
         Task<ServiceResponse<string>> UploadPhoto(PhotoDTO request);
-        Task<ServiceResponse<List<PhotoDTO>>> GetPhotoAll();
-        Task<ServiceResponse<List<PhotoDTO>>> GetPhotoFilter(string photoName);
+        Task<ServiceResponse<string>> EditPhotoName(EditPhotoDTO request);
+        Task<ServiceResponse<string>> DeletePhotoName(EditPhotoDTO request);
+        Task<ServiceResponse<List<GetPhotoDTO>>> GetPhotoAll(string username);
+        Task<ServiceResponse<List<GetPhotoDTO>>> GetPhotoFilter(GetPhotoFilterDTO request);
+        Task<ServiceResponse<List<GetPhotoDTO>>> GetPhotoFilter(string photoName);
+        Task<ServiceResponse<bool>> CheckUser(string username);
     }
 }
