@@ -19,7 +19,6 @@ namespace PhotoGallery_BackEnd.Services.Gallery
             _mapper = mapper;
             _httpContextAccessor = httpContextAccessor;
         }
-
         public async Task<ServiceResponse<string>> UploadPhoto(PhotoDTO request)
         {
             var response = new ServiceResponse<string>();
@@ -50,6 +49,7 @@ namespace PhotoGallery_BackEnd.Services.Gallery
                 var fileData = request.requestFile;
                 var uploadedFileNames = new List<string>();
                 var uploadedFileSystemNames = new List<string>();
+                var uploadedFileExtension = new List<string>();
                 var uploadedFileSizes = new List<string>();
                 var uploadedTableNames = new List<string>();
 
@@ -58,18 +58,18 @@ namespace PhotoGallery_BackEnd.Services.Gallery
                     var file = (fileData);
                     if (file != null)
                     {
-                        var fileName = file.FileName;
                         // Get the original file name
-                        fileName = ContentDispositionHeaderValue.Parse(file.ContentDisposition).FileName.Trim('"');
+                        var fileName = ContentDispositionHeaderValue.Parse(file.ContentDisposition).FileName.Trim('"');
                         // Extract the file extension
-                        var fileExtension = Path.GetExtension(fileName);
+                        uploadedFileExtension.Add(Path.GetExtension(fileName));
                         // Generate a unique folder name by appending a counter if the folder already exists
-                        var systemfileName = GenerateUniqueFileName(username,file.FileName, userDirectory);
+                        var systemfileName = GenerateUniqueFileName(username,request.requestFileName+ uploadedFileExtension[0], userDirectory);
                         var filePath = Path.Combine(userDirectory, systemfileName);
                         using (var fileStream = new FileStream(filePath, FileMode.Create))
                         {
                             await file.CopyToAsync(fileStream);
                         }
+                        fileName = request.requestFileName;
                         uploadedFileNames.Add(fileName);
                         uploadedFileSystemNames.Add(systemfileName);
                         uploadedFileSizes.Add(file.Length.ToString());
@@ -93,7 +93,7 @@ namespace PhotoGallery_BackEnd.Services.Gallery
                     basePath = userDirectory,
                     nameFile = uploadedFileNames[0].ToString(),
                     nameFileSystem = uploadedFileSystemNames[0].ToString(),
-                    fileExtension = uploadedFileNames[0].ToString(),
+                    fileExtension = uploadedFileExtension[0].ToString(),
                     sizeFile = uploadedFileSizes[0].ToString(),
                     timeUpdated = DateTime.UtcNow
                 };
@@ -145,12 +145,10 @@ namespace PhotoGallery_BackEnd.Services.Gallery
             }
             return response;
         }
-
         public async Task<ServiceResponse<List<PhotoDTO>>> GetPhotoAll()
         {
             throw new NotImplementedException();
         }
-
         public async Task<ServiceResponse<List<PhotoDTO>>> GetPhotoFilter(string photoName)
         {
             throw new NotImplementedException();
@@ -187,7 +185,7 @@ namespace PhotoGallery_BackEnd.Services.Gallery
 
             string uniqueFileName = $"{counter}_{username}_{fileNameWithoutExtension}{fileExtension}";
 
-            if (File.Exists(Path.Combine(directoryPath, originalFileName)))
+            if (File.Exists(Path.Combine(directoryPath, uniqueFileName)))
             {
                 while (File.Exists(Path.Combine(directoryPath, uniqueFileName)))
                 {
@@ -207,7 +205,6 @@ namespace PhotoGallery_BackEnd.Services.Gallery
 
             return uniqueFileName;
         }
-
         private void WriteDataToFile(string taskid, List<string> uploadedFilename, List<string> uploadedSystemFilename, List<string> uploadedTablename, string filePath)
         {
             using (var writer = new StreamWriter(filePath))
@@ -265,7 +262,7 @@ namespace PhotoGallery_BackEnd.Services.Gallery
                 {
                     username = user.username,
                     userAccessLevelid = user.userAccessLevelid,
-                    roles = user.userAccessLevels.accessLevel.ToString()
+                    roles = user.userAccessLevels.accessLevelName.ToString()
                 };
             }
             return response;

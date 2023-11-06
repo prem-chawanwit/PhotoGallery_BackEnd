@@ -49,6 +49,7 @@ global using ServiceStack.Auth;
 global using PhotoGallery_BackEnd.Models.Users;
 global using ServiceStack.Auth;
 global using System.Text;
+global using System.Data.SqlClient;
 
 // Minimal API section
 var builder = WebApplication.CreateBuilder(args);

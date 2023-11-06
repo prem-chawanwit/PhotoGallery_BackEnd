@@ -57,7 +57,7 @@
                     {
                         username = user.username,
                         userAccessLevelid = user.userAccessLevelid,
-                        roles = user.userAccessLevels.accessLevel.ToString()
+                        roles = user.userAccessLevels.accessLevelName.ToString()
                 };
                 }
                 else
@@ -172,7 +172,7 @@
                             {
                                 username = user.username,
                                 userAccessLevelid = user.userAccessLevelid,
-                                roles = user.userAccessLevels.accessLevel.ToString()
+                                roles = user.userAccessLevels.accessLevelName.ToString()
                             };
                             response.Success = true;
                             response.Message = $"{username} session is still valid.";

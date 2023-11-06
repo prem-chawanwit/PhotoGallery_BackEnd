@@ -1,4 +1,6 @@
-﻿namespace PhotoGallery_BackeEnd.Context
+﻿
+
+namespace PhotoGallery_BackeEnd.Context
 {
     public class APIDbContext : DbContext
     {
@@ -10,7 +12,6 @@
         public DbSet<UserAccessLevel> userAccessLevel => Set<UserAccessLevel>();
         public DbSet<LoginTimming> loginTimming => Set<LoginTimming>();
         public DbSet<SectionUploadPathData> uploadPathData => Set<SectionUploadPathData>();
-
         public APIDbContext(DbContextOptions<APIDbContext> options) : base(options)
         {
 
@@ -133,6 +134,8 @@
             {
                 record.isLoggedIn = false;
             }
+            ResetIdentitySeeds();
+            //reset indxing
 
             await SaveChangesAsync();
         }
@@ -143,6 +146,16 @@
                 passwordSalt = hmac.Key;
                 passwordHash = hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes(password));
             }
+        }
+        public void ResetIdentitySeeds()
+        {
+            Database.ExecuteSqlRaw("DECLARE @MaxId INT; SELECT @MaxId = CASE WHEN MAX(id) IS NOT NULL THEN MAX(id) ELSE 0 END FROM [PhotoGalleryDB].[dbo].API_LoginTimming; DBCC CHECKIDENT ('API_LoginTimming', RESEED, @MaxId);");
+            Database.ExecuteSqlRaw("DECLARE @MaxId INT; SELECT @MaxId = CASE WHEN MAX(id) IS NOT NULL THEN MAX(id) ELSE 0 END FROM [PhotoGalleryDB].[dbo].API_SectionUploadPathData; DBCC CHECKIDENT ('API_SectionUploadPathData', RESEED, @MaxId);");
+            Database.ExecuteSqlRaw("DECLARE @MaxId INT; SELECT @MaxId = CASE WHEN MAX(id) IS NOT NULL THEN MAX(id) ELSE 0 END FROM [PhotoGalleryDB].[dbo].API_TaskModel; DBCC CHECKIDENT ('API_TaskModel', RESEED, @MaxId);");
+            Database.ExecuteSqlRaw("DECLARE @MaxId INT; SELECT @MaxId = CASE WHEN MAX(id) IS NOT NULL THEN MAX(id) ELSE 0 END FROM [PhotoGalleryDB].[dbo].API_TaskOrderData; DBCC CHECKIDENT ('API_TaskOrderData', RESEED, @MaxId);");
+            Database.ExecuteSqlRaw("DECLARE @MaxId INT; SELECT @MaxId = CASE WHEN MAX(id) IS NOT NULL THEN MAX(id) ELSE 0 END FROM [PhotoGalleryDB].[dbo].API_TaskReviewData; DBCC CHECKIDENT ('API_TaskReviewData', RESEED, @MaxId);");
+            Database.ExecuteSqlRaw("DECLARE @MaxId INT; SELECT @MaxId = CASE WHEN MAX(id) IS NOT NULL THEN MAX(id) ELSE 0 END FROM [PhotoGalleryDB].[dbo].API_UserAccessLevel; DBCC CHECKIDENT ('API_UserAccessLevel', RESEED, @MaxId);");
+            Database.ExecuteSqlRaw("DECLARE @MaxId INT; SELECT @MaxId = CASE WHEN MAX(id) IS NOT NULL THEN MAX(id) ELSE 0 END FROM [PhotoGalleryDB].[dbo].API_Users; DBCC CHECKIDENT ('API_Users', RESEED, @MaxId);");
         }
     }
 
